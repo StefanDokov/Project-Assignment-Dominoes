@@ -11,6 +11,7 @@ public:
 	void drawTexture(std::string id,
 		int x, int y,
 		int width, int height,
+		int degree,
 		SDL_Renderer* ren,
 		SDL_RendererFlip flip = SDL_FLIP_NONE);
 	void drawOneFrameFromTexture(std::string id,

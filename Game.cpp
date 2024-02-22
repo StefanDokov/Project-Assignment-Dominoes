@@ -9,6 +9,8 @@ Game::Game()
     Game::running = true;
     isDiffShown = false;
     isThemeShown = false;
+    selected = false;
+    selectedItem = -1;
     theme = "cars";
     dominoPlayer = new DominoPlayer();
     dominoTable = new DominoTable();
@@ -19,14 +21,18 @@ Game::Game()
     dominoPlayer->addPiece(d);
     }
     
-    
+    dominoPlayer->myPieces[3].hidden = true;
+    dominoPlayer->myPieces[6].hidden = true;
 
-    DominoBrick dd;
-    dominoTable->addPiece(dd);
+    
+    dominoTable->createFirstBrick();
+    
+    
 }
 
 Game::~Game()
 {
+    
     delete dominoPlayer;
     dominoPlayer = nullptr;
     delete dominoTable;
@@ -44,7 +50,11 @@ void Game::renderPlayer(DominoPlayer* b)
     int a = 50;
 
     for (int i = 0; i < b->myPieces.size(); i++) {
-        renderBrick(&b->myPieces[i], a, wh - 150);
+        if (!b->myPieces[i].hidden) {
+            b->myPieces[i].brickX = a;
+            b->myPieces[i].brickY = wh - 150;
+            renderBrick(&b->myPieces[i]);
+        }
         a += 75;
     }
 }
@@ -142,7 +152,7 @@ void Game::render()
     renderPlayer(dominoPlayer);
     
     renderTable(dominoTable);
-
+   
 
     SDL_RenderPresent(renderer);
 
@@ -175,6 +185,37 @@ void Game::handleEvents()
                 int ww, wh;
                 SDL_GetWindowSize(window, &ww, &wh);
                 
+                if (msy < wh && msy >= (wh - 150) && msx >= 50) {
+                    for (int i = 0; i < dominoPlayer->getSize();i++) {
+                        if (dominoPlayer->myPieces[i].brickX < msx && msx <= dominoPlayer->myPieces[i].lastX && dominoPlayer->myPieces[i].brickY < msy && dominoPlayer->myPieces[i].lastY >= msy) {
+                            if (dominoPlayer->myPieces[i].hidden) {
+                                return;
+                            }
+                            selectedItem = i;
+                            selected = true;
+                            return;
+                        }
+                    }
+                }
+
+                if ((msx >= dominoTable->sideBx && msx <= dominoTable->sideBx + 50) && (msy <= dominoTable->sideBy && msy >= dominoTable->sideBy - 50)) {
+                    
+                    if (selected) {
+                        if (selectedItem < 0) {
+                            return;
+                        }
+                        DominoBrick dd = dominoPlayer->myPieces[selectedItem];
+
+                        dd.brickX = dominoTable->sideBx;
+                        dd.brickY = dominoTable->sideBy - 50;
+                        dominoTable->addPiece(dd);
+                        dominoPlayer->myPieces[selectedItem].hidden = true;
+                        selected = false;
+                        selectedItem = -1;
+                    }
+                    
+                    
+                }
                 if (msy >= normaldRect.y && msy < mediumdRect.y) {
                     fpointerdRect.x = normaldRect.x - 30;
                     fpointerdRect.y = normaldRect.y;
@@ -259,12 +300,41 @@ bool Game::isRunning()
     return this->running;
 }
 
-void Game::renderBrick(DominoBrick* b, int x, int y)
+void Game::renderBrick(DominoBrick* b)
 {
-    string currTheme = theme + "_" + to_string(b->pValue1);
-    TextureManager::Instance()->drawTexture(currTheme, x, y, 50, 50, renderer);
-    currTheme = theme + "_" + to_string(b->pValue2);
-    TextureManager::Instance()->drawTexture(currTheme, x, y + 50, 50, 50, renderer);
+    if (b->direction == "down") {
+        string currTheme = theme + "_" + to_string(b->pValue1);
+        TextureManager::Instance()->drawTexture(currTheme, b->brickX, b->brickY, 50, 50, 0, renderer, SDL_FLIP_VERTICAL);
+        currTheme = theme + "_" + to_string(b->pValue2);
+        TextureManager::Instance()->drawTexture(currTheme, b->brickX, b->brickY + 50, 50, 50, 0, renderer);
+        b->lastX = b->brickX + 50;
+        b->lastY = b->brickY + 100;
+    }
+    if (b->direction == "left") {
+        string currTheme = theme + "_" + to_string(b->pValue1);
+        TextureManager::Instance()->drawTexture(currTheme, b->brickX + 50, b->brickY, 50, 50, -90, renderer);
+        currTheme = theme + "_" + to_string(b->pValue2);
+        TextureManager::Instance()->drawTexture(currTheme, b->brickX, b->brickY , 50, 50, 90, renderer);
+        b->lastX = b->brickX + 100;
+        b->lastY = b->brickY + 50;
+    }
+
+    if (b->direction == "right") {
+        string currTheme = theme + "_" + to_string(b->pValue1);
+        TextureManager::Instance()->drawTexture(currTheme, b->brickX, b->brickY, 50, 50, 90, renderer);
+        currTheme = theme + "_" + to_string(b->pValue2);
+        TextureManager::Instance()->drawTexture(currTheme, b->brickX + 50, b->brickY, 50, 50, -90, renderer);
+        b->lastX = b->brickX + 100;
+        b->lastY = b->brickY + 50;
+    }
+    if (b->direction == "up") {
+        string currTheme = theme + "_" + to_string(b->pValue1);
+        TextureManager::Instance()->drawTexture(currTheme, b->brickX, b->brickY + 50, 50, 50, 0, renderer);
+        currTheme = theme + "_" + to_string(b->pValue2);
+        TextureManager::Instance()->drawTexture(currTheme, b->brickX, b->brickY, 50, 50, 0, renderer, SDL_FLIP_VERTICAL);
+        b->lastX = b->brickX + 50;
+        b->lastY = b->brickY + 100;
+    }
 }
 
 void Game::renderTable(DominoTable* s)
@@ -272,24 +342,34 @@ void Game::renderTable(DominoTable* s)
 
     int ww, wh;
     SDL_GetWindowSize(window, &ww, &wh);
-    int a = 50;
-
+    
     for (int i = 0; i < s->tablePieces.size(); i++) {
-        renderBrick(&s->tablePieces[i], a, wh / 2 - 100);
-        a += 75;
+        
+        renderBrick(&s->tablePieces[i]);
+        
     }
+    DominoBrick last = s->tablePieces.back();
+    dominoTable->sideBx = last.lastX;
+    dominoTable->sideBy = last.lastY;
 }
 
 void Game::renderOponent(DominoPlayer* b)
 {
     int ww, wh;
     SDL_GetWindowSize(window, &ww, &wh);
-    int count = b->getSize();
+    int displayCount = 0;
+    for (auto& brick: b->myPieces) {
+        
+        if (!brick.hidden) {
+            displayCount++;
+        }
+        
+    }
 
     int a = 50;
-
-    for (int i = 0; i < count;i++) {
-        TextureManager::Instance()->drawTexture("background", a, 50, 50, 50, renderer);
+   
+    for (int i = 0; i < displayCount;i++) {
+        TextureManager::Instance()->drawTexture("background", a, 50, 50, 50, 0, renderer);
         a += 75;
     }
 

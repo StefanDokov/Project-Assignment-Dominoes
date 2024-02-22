@@ -24,7 +24,7 @@ public:
 	void handleEvents();
 	void clean();
 	bool isRunning();
-	void renderBrick(DominoBrick* b, int x, int y);
+	void renderBrick(DominoBrick* b);
 	void renderTable(DominoTable*);
 	string theme;
 	void renderOponent(DominoPlayer*);
@@ -65,6 +65,8 @@ private:
 		betdRect;
 	bool isDiffShown;
 	bool isThemeShown;
+	bool selected;
+	int selectedItem;
 	DominoPlayer* dominoPlayer = nullptr;
 	DominoTable* dominoTable = nullptr;
 	DominoBrick* d1 = nullptr;

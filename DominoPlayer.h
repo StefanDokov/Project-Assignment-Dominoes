@@ -8,6 +8,7 @@ using namespace std;
 class DominoPlayer {
 public:
 	DominoPlayer();
+	~DominoPlayer() {};
 	int getSize();
 	void addPiece(DominoBrick);
 	vector<DominoBrick> myPieces;
