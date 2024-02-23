@@ -19,6 +19,7 @@ public:
 	int brickY;
 	int lastX;
 	int lastY;
+	string arrowes;
 private:
 
 

@@ -11,30 +11,21 @@ Game::Game()
     isThemeShown = false;
     selected = false;
     selectedItem = -1;
-    theme = "cars";
-    dominoPlayer = new DominoPlayer();
-    dominoTable = new DominoTable();
-    
-    
-    for (int i = 0; i < 10;i++) {
-    DominoBrick d;
-    dominoPlayer->addPiece(d);
-    }
-    
-    dominoPlayer->myPieces[3].hidden = true;
-    dominoPlayer->myPieces[6].hidden = true;
+    theme = "";
+    menuBool = true;
+    startGame = false;
+    difficulty = 0;
 
-    
-    dominoTable->createFirstBrick();
-    
     
 }
 
 Game::~Game()
 {
     
-    delete dominoPlayer;
-    dominoPlayer = nullptr;
+    delete dominoPlayer1;
+    dominoPlayer1 = nullptr;
+    delete dominoPlayer2;
+    dominoPlayer2 = nullptr;
     delete dominoTable;
     dominoTable = nullptr;
     delete d1;
@@ -47,15 +38,15 @@ void Game::renderPlayer(DominoPlayer* b)
 {
     int ww, wh;
     SDL_GetWindowSize(window, &ww, &wh);
-    int a = 50;
+    int a = 20;
 
     for (int i = 0; i < b->myPieces.size(); i++) {
         if (!b->myPieces[i].hidden) {
             b->myPieces[i].brickX = a;
-            b->myPieces[i].brickY = wh - 150;
+            b->myPieces[i].brickY = wh - 90;
             renderBrick(&b->myPieces[i]);
         }
-        a += 75;
+        a += 35;
     }
 }
 
@@ -127,32 +118,33 @@ void Game::render()
 
     SDL_RenderClear(renderer);
 
-    //SDL_RenderCopy(renderer, menuFont, NULL, &menudRect);
-    //SDL_RenderCopy(renderer, difficultyFont, NULL, &difficultydRect);
-    //SDL_RenderCopy(renderer, normalDifFont, NULL, &normaldRect);
-    //SDL_RenderCopy(renderer, mediumDifFont, NULL, &mediumdRect);
-    //SDL_RenderCopy(renderer, hardDifFont, NULL, &harddRect);
-    //SDL_RenderCopy(renderer, themeFont, NULL, &themedRect);
-    //SDL_RenderCopy(renderer, seaFont, NULL, &seadRect);
-    //SDL_RenderCopy(renderer, carFont, NULL, &cardRect);
-    //SDL_RenderCopy(renderer, flowerFont, NULL, &flowerdRect);
-    //SDL_RenderCopy(renderer, okFont, NULL, &okdRect);
+    if (menuBool) {
+        SDL_RenderCopy(renderer, menuFont, NULL, &menudRect);
+        SDL_RenderCopy(renderer, difficultyFont, NULL, &difficultydRect);
+        SDL_RenderCopy(renderer, normalDifFont, NULL, &normaldRect);
+        SDL_RenderCopy(renderer, mediumDifFont, NULL, &mediumdRect);
+        SDL_RenderCopy(renderer, hardDifFont, NULL, &harddRect);
+        SDL_RenderCopy(renderer, themeFont, NULL, &themedRect);
+        SDL_RenderCopy(renderer, seaFont, NULL, &seadRect);
+        SDL_RenderCopy(renderer, carFont, NULL, &cardRect);
+        SDL_RenderCopy(renderer, flowerFont, NULL, &flowerdRect);
+        SDL_RenderCopy(renderer, okFont, NULL, &okdRect);
 
-    //if (isDiffShown) {
-    //    SDL_RenderCopy(renderer, fpointerFont, NULL, &fpointerdRect);
-    //}
-    //if (isThemeShown) {
-    //    SDL_RenderCopy(renderer, spointerFont, NULL, &spointerdRect);
-    //}
+        if (isDiffShown) {
+            SDL_RenderCopy(renderer, fpointerFont, NULL, &fpointerdRect);
+        }
+        if (isThemeShown) {
+            SDL_RenderCopy(renderer, spointerFont, NULL, &spointerdRect);
+        }
 
-    
-    
-    renderOponent(dominoPlayer);
+    }
+    else {
+        renderOponent(dominoTable->oppositePlayer);
 
-    renderPlayer(dominoPlayer);
-    
-    renderTable(dominoTable);
-   
+        renderPlayer(dominoTable->currentPlayer);
+
+        renderTable(dominoTable);
+    }
 
     SDL_RenderPresent(renderer);
 
@@ -163,7 +155,39 @@ void Game::render()
 
 void Game::update()
 {
+    if (startGame) {
+        if (difficulty == 0) {
+            difficulty = 10;
+        }
 
+        if (theme == "") {
+            string themeArr[3] = { "sea", "cars", "flowers" };
+            std::random_device rd;
+            std::mt19937 gen(rd());
+            std::uniform_int_distribution<> dis(0, 2);
+            int randomNumber = dis(gen);
+            theme = themeArr[randomNumber];
+        }
+        dominoPlayer1 = new DominoPlayer();
+        dominoPlayer2 = new DominoPlayer();
+        dominoTable = new DominoTable();
+
+        for (int i = 0; i < difficulty;i++) {
+            DominoBrick d;
+            dominoPlayer1->addPiece(d);
+        }
+
+        for (int i = 0; i < difficulty;i++) {
+            DominoBrick d;
+            dominoPlayer2->addPiece(d);
+        }
+
+        dominoTable->createFirstBrick();
+        dominoTable->currentPlayer = dominoPlayer1;
+        dominoTable->oppositePlayer = dominoPlayer2;
+
+        startGame = false;
+    }
 
 
 
@@ -184,82 +208,117 @@ void Game::handleEvents()
                 int tw, th;
                 int ww, wh;
                 SDL_GetWindowSize(window, &ww, &wh);
-                
-                if (msy < wh && msy >= (wh - 150) && msx >= 50) {
-                    for (int i = 0; i < dominoPlayer->getSize();i++) {
-                        if (dominoPlayer->myPieces[i].brickX < msx && msx <= dominoPlayer->myPieces[i].lastX && dominoPlayer->myPieces[i].brickY < msy && dominoPlayer->myPieces[i].lastY >= msy) {
-                            if (dominoPlayer->myPieces[i].hidden) {
+                if (!menuBool) {
+                    if (msy < wh && msy >= (wh - 90) && msx >= 20) {
+                        for (int i = 0; i < dominoTable->currentPlayer->myPieces.size();i++) {
+                            if (dominoTable->currentPlayer->myPieces[i].brickX < msx && msx <= dominoTable->currentPlayer->myPieces[i].lastX && dominoTable->currentPlayer->myPieces[i].brickY < msy && dominoTable->currentPlayer->myPieces[i].lastY >= msy) {
+                                if (dominoTable->currentPlayer->myPieces[i].hidden) {
+                                    return;
+                                }
+                                selectedItem = i;
+                                selected = true;
                                 return;
                             }
-                            selectedItem = i;
-                            selected = true;
-                            return;
                         }
                     }
-                }
 
-                if ((msx >= dominoTable->sideBx && msx <= dominoTable->sideBx + 50) && (msy <= dominoTable->sideBy && msy >= dominoTable->sideBy - 50)) {
-                    
-                    if (selected) {
-                        if (selectedItem < 0) {
+                    if ((msx >= dominoTable->sideBx - 25 && msx <= dominoTable->sideBx) && (msy <= dominoTable->sideBy && msy >= dominoTable->sideBy - 25)) {
+
+                        if (selected) {
+                            if (selectedItem < 0) {
+                                return;
+                            }
+                            DominoBrick dd = dominoTable->currentPlayer->myPieces[selectedItem];
+                            int nextPath = dominoTable->tablePieces.size();
+                            cout << nextPath << endl;
+                            cout << dominoTable->pathfinder[nextPath] << endl;
+                            if (dominoTable->pathfinder[nextPath] == "down") {
+                                dd.brickX = dominoTable->sideBx - 25;
+                                dd.brickY = dominoTable->sideBy;
+                            }
+                            else if (dominoTable->pathfinder[nextPath] == "right") {
+                                dd.direction = "right";
+                                dd.brickX = dominoTable->sideBx;
+                                dd.brickY = dominoTable->sideBy - 25;
+                            }
+                            /*dd.brickX = dominoTable->sideBx - 25;
+                            dd.brickY = dominoTable->sideBy;*/
+                            dominoTable->addPiece(dd);
+                            dominoTable->currentPlayer->myPieces[selectedItem].hidden = true;
+                            selected = false;
+                            selectedItem = -1;
+                            dominoTable->switchPlayers();
                             return;
                         }
-                        DominoBrick dd = dominoPlayer->myPieces[selectedItem];
 
-                        dd.brickX = dominoTable->sideBx;
-                        dd.brickY = dominoTable->sideBy - 50;
-                        dominoTable->addPiece(dd);
-                        dominoPlayer->myPieces[selectedItem].hidden = true;
-                        selected = false;
-                        selectedItem = -1;
-                    }
-                    
-                    
-                }
-                if (msy >= normaldRect.y && msy < mediumdRect.y) {
-                    fpointerdRect.x = normaldRect.x - 30;
-                    fpointerdRect.y = normaldRect.y;
-                    if (!isDiffShown) {
-                        isDiffShown = true;
-                    }
-                }
-                if (msy >= mediumdRect.y && msy < harddRect.y) {
-                    fpointerdRect.x = mediumdRect.x - 30;
-                    fpointerdRect.y = mediumdRect.y;
-                    if (!isDiffShown) {
-                        isDiffShown = true;
-                    }
-                }
-                if (msy >= harddRect.y && msy < themedRect.y) {
-                    fpointerdRect.x = harddRect.x - 30;
-                    fpointerdRect.y = harddRect.y;
-                    if (!isDiffShown) {
-                        isDiffShown = true;
-                    }
-                }
 
-                if (msy >= seadRect.y && msy < cardRect.y) {
-                    spointerdRect.x = seadRect.x - 30;
-                    spointerdRect.y = seadRect.y;
-                    if (!isThemeShown) {
-                        isThemeShown = true;
                     }
                 }
-                if (msy >= cardRect.y && msy < flowerdRect.y) {
-                    spointerdRect.x = cardRect.x - 30;
-                    spointerdRect.y = cardRect.y;
-                    if (!isThemeShown) {
-                        isThemeShown = true;
+                if (menuBool) {
+                    if (msy >= normaldRect.y && msy < mediumdRect.y) {
+                        fpointerdRect.x = normaldRect.x - 30;
+                        fpointerdRect.y = normaldRect.y;
+                        if (!isDiffShown) {
+                            isDiffShown = true;
+                        }
+                            difficulty = 10;
+                                     
                     }
-                }
-                if (msy >= flowerdRect.y && msy < flowerdRect.y + flowerdRect.h) {
-                    spointerdRect.x = flowerdRect.x - 30;
-                    spointerdRect.y = flowerdRect.y;
-                    if (!isThemeShown) {
-                        isThemeShown = true;
+                    if (msy >= mediumdRect.y && msy < harddRect.y) {
+                        fpointerdRect.x = mediumdRect.x - 30;
+                        fpointerdRect.y = mediumdRect.y;
+                        if (!isDiffShown) {
+                            isDiffShown = true;
+                        }
+                            difficulty = 20;
+      
+                        
                     }
-                }
+                    if (msy >= harddRect.y && msy < themedRect.y) {
+                        fpointerdRect.x = harddRect.x - 30;
+                        fpointerdRect.y = harddRect.y;
+                        if (!isDiffShown) {
+                            isDiffShown = true;
+                        }
+                            difficulty = 30;
+           
+                    }
 
+                    if (msy >= seadRect.y && msy < cardRect.y) {
+                        spointerdRect.x = seadRect.x - 30;
+                        spointerdRect.y = seadRect.y;
+                        if (!isThemeShown) {
+                            isThemeShown = true;
+                        }
+                            theme = "sea";
+      
+                        
+                    }
+                    if (msy >= cardRect.y && msy < flowerdRect.y) {
+                        spointerdRect.x = cardRect.x - 30;
+                        spointerdRect.y = cardRect.y;
+                        if (!isThemeShown) {
+                            isThemeShown = true;
+                        }
+                            theme = "cars";
+                            
+     
+                    }
+                    if (msy >= flowerdRect.y && msy < flowerdRect.y + flowerdRect.h) {
+                        spointerdRect.x = flowerdRect.x - 30;
+                        spointerdRect.y = flowerdRect.y;
+                        if (!isThemeShown) {
+                            isThemeShown = true;
+                        }
+                            theme = "flowers";
+             
+                    }
+                    if (msy >= okdRect.y && msy < okdRect.y + okdRect.h) {
+                        
+                        startGame = true;
+                        menuBool = false;
+                    }
+                }
             }
         }break;
         case SDL_MOUSEBUTTONUP: {
@@ -285,8 +344,10 @@ void Game::clean()
     SDL_DestroyWindow(window);
     SDL_DestroyRenderer(renderer);
     SDL_Quit();
-    delete dominoPlayer;
-    dominoPlayer = nullptr;
+    delete dominoPlayer1;
+    dominoPlayer1 = nullptr;
+    delete dominoPlayer2;
+    dominoPlayer2 = nullptr;
     delete dominoTable;
     dominoTable = nullptr;
     delete d1;
@@ -304,36 +365,36 @@ void Game::renderBrick(DominoBrick* b)
 {
     if (b->direction == "down") {
         string currTheme = theme + "_" + to_string(b->pValue1);
-        TextureManager::Instance()->drawTexture(currTheme, b->brickX, b->brickY, 50, 50, 0, renderer, SDL_FLIP_VERTICAL);
+        TextureManager::Instance()->drawTexture(currTheme, b->brickX, b->brickY, 25, 25, 0, renderer, SDL_FLIP_VERTICAL);
         currTheme = theme + "_" + to_string(b->pValue2);
-        TextureManager::Instance()->drawTexture(currTheme, b->brickX, b->brickY + 50, 50, 50, 0, renderer);
-        b->lastX = b->brickX + 50;
-        b->lastY = b->brickY + 100;
+        TextureManager::Instance()->drawTexture(currTheme, b->brickX, b->brickY + 25, 25, 25, 0, renderer);
+        b->lastX = b->brickX + 25;
+        b->lastY = b->brickY + 50;
     }
     if (b->direction == "left") {
         string currTheme = theme + "_" + to_string(b->pValue1);
-        TextureManager::Instance()->drawTexture(currTheme, b->brickX + 50, b->brickY, 50, 50, -90, renderer);
+        TextureManager::Instance()->drawTexture(currTheme, b->brickX + 25, b->brickY, 25, 25, -90, renderer);
         currTheme = theme + "_" + to_string(b->pValue2);
-        TextureManager::Instance()->drawTexture(currTheme, b->brickX, b->brickY , 50, 50, 90, renderer);
-        b->lastX = b->brickX + 100;
-        b->lastY = b->brickY + 50;
+        TextureManager::Instance()->drawTexture(currTheme, b->brickX, b->brickY , 25, 25, 90, renderer);
+        b->lastX = b->brickX + 50;
+        b->lastY = b->brickY + 25;
     }
 
     if (b->direction == "right") {
         string currTheme = theme + "_" + to_string(b->pValue1);
-        TextureManager::Instance()->drawTexture(currTheme, b->brickX, b->brickY, 50, 50, 90, renderer);
+        TextureManager::Instance()->drawTexture(currTheme, b->brickX, b->brickY, 25, 25, 90, renderer);
         currTheme = theme + "_" + to_string(b->pValue2);
-        TextureManager::Instance()->drawTexture(currTheme, b->brickX + 50, b->brickY, 50, 50, -90, renderer);
-        b->lastX = b->brickX + 100;
-        b->lastY = b->brickY + 50;
+        TextureManager::Instance()->drawTexture(currTheme, b->brickX + 25, b->brickY, 25, 25, -90, renderer);
+        b->lastX = b->brickX + 50;
+        b->lastY = b->brickY + 25;
     }
     if (b->direction == "up") {
         string currTheme = theme + "_" + to_string(b->pValue1);
-        TextureManager::Instance()->drawTexture(currTheme, b->brickX, b->brickY + 50, 50, 50, 0, renderer);
+        TextureManager::Instance()->drawTexture(currTheme, b->brickX, b->brickY + 25, 25, 25, 0, renderer);
         currTheme = theme + "_" + to_string(b->pValue2);
-        TextureManager::Instance()->drawTexture(currTheme, b->brickX, b->brickY, 50, 50, 0, renderer, SDL_FLIP_VERTICAL);
-        b->lastX = b->brickX + 50;
-        b->lastY = b->brickY + 100;
+        TextureManager::Instance()->drawTexture(currTheme, b->brickX, b->brickY, 25, 25, 0, renderer, SDL_FLIP_VERTICAL);
+        b->lastX = b->brickX + 25;
+        b->lastY = b->brickY + 50;
     }
 }
 
@@ -366,11 +427,11 @@ void Game::renderOponent(DominoPlayer* b)
         
     }
 
-    int a = 50;
+    int a = 20;
    
     for (int i = 0; i < displayCount;i++) {
-        TextureManager::Instance()->drawTexture("background", a, 50, 50, 50, 0, renderer);
-        a += 75;
+        TextureManager::Instance()->drawTexture("background", a, 20, 25, 25, 0, renderer);
+        a += 35;
     }
 
     
@@ -399,9 +460,9 @@ bool Game::ttf_init() {
         return false;
     }
 
-    font1 = TTF_OpenFont("assets/fonts/Valorant.ttf", 75);
-    font2 = TTF_OpenFont("assets/fonts/Valorant.ttf", 55);
-    font3 = TTF_OpenFont("assets/fonts/Valorant.ttf", 35);
+    font1 = TTF_OpenFont("assets/fonts/Valorant.ttf", 65);
+    font2 = TTF_OpenFont("assets/fonts/Valorant.ttf", 45);
+    font3 = TTF_OpenFont("assets/fonts/Valorant.ttf", 25);
 
     if (font1 == NULL || font2 == NULL || font3 == NULL) {
         return false;
@@ -428,34 +489,34 @@ bool Game::ttf_init() {
     SDL_GetWindowSize(window, &ww, &wh);
     int tw, th;
     SDL_QueryTexture(menuFont, 0, 0, &tw, &th);
-    menudRect = { ww / 2 - tw / 2, (int)(0 + wh * 0.25 - th / 2), tw,th };
+    menudRect = { ww / 2 - tw / 2, (int)(0 + wh * 0.15 - th / 2), tw,th };
 
     SDL_QueryTexture(difficultyFont, 0, 0, &tw, &th);
-    difficultydRect = { ww / 2 - tw / 2, (int)(0 + wh * 0.25 - th / 2) + 100, tw,th };
+    difficultydRect = { ww / 2 - tw / 2, (int)(0 + wh * 0.15 - th / 2) + 70, tw,th };
 
     SDL_QueryTexture(normalDifFont, 0, 0, &tw, &th);
-    normaldRect = { ww / 2 - tw / 2, (int)(0 + wh * 0.25 - th / 2) + 150, tw,th };
+    normaldRect = { ww / 2 - tw / 2, (int)(0 + wh * 0.15 - th / 2) + 120, tw,th };
 
     SDL_QueryTexture(mediumDifFont, 0, 0, &tw, &th);
-    mediumdRect = { ww / 2 - tw / 2, (int)(0 + wh * 0.25 - th / 2) + 200, tw,th };
+    mediumdRect = { ww / 2 - tw / 2, (int)(0 + wh * 0.15 - th / 2) + 160, tw,th };
 
     SDL_QueryTexture(hardDifFont, 0, 0, &tw, &th);
-    harddRect = { ww / 2 - tw / 2, (int)(0 + wh * 0.25 - th / 2) + 250, tw,th };
+    harddRect = { ww / 2 - tw / 2, (int)(0 + wh * 0.15 - th / 2) + 200, tw,th };
 
     SDL_QueryTexture(themeFont, 0, 0, &tw, &th);
-    themedRect = { ww / 2 - tw / 2, (int)(0 + wh * 0.25 - th / 2) + 350, tw,th };
+    themedRect = { ww / 2 - tw / 2, (int)(0 + wh * 0.15 - th / 2) + 300, tw,th };
 
     SDL_QueryTexture(seaFont, 0, 0, &tw, &th);
-    seadRect = { ww / 2 - tw / 2, (int)(0 + wh * 0.25 - th / 2) + 400, tw,th };
+    seadRect = { ww / 2 - tw / 2, (int)(0 + wh * 0.15 - th / 2) + 350, tw,th };
 
     SDL_QueryTexture(carFont, 0, 0, &tw, &th);
-    cardRect = { ww / 2 - tw / 2, (int)(0 + wh * 0.25 - th / 2) + 450, tw,th };
+    cardRect = { ww / 2 - tw / 2, (int)(0 + wh * 0.15 - th / 2) + 390, tw,th };
 
     SDL_QueryTexture(flowerFont, 0, 0, &tw, &th);
-    flowerdRect = { ww / 2 - tw / 2, (int)(0 + wh * 0.25 - th / 2) + 500, tw,th };
+    flowerdRect = { ww / 2 - tw / 2, (int)(0 + wh * 0.15 - th / 2) + 430, tw,th };
 
     SDL_QueryTexture(okFont, 0, 0, &tw, &th);
-    okdRect = { ww / 2 - tw / 2, (int)(0 + wh * 0.25 - th / 2) + 650, tw,th };
+    okdRect = { ww / 2 - tw / 2, (int)(0 + wh * 0.15 - th / 2) + 500, tw,th };
 
     SDL_QueryTexture(fpointerFont, 0, 0, &tw, &th);
     fpointerdRect = { 0, 0, tw,th };

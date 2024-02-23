@@ -1,8 +1,8 @@
 #include "Game.h"
 
 Game* game = NULL;
-const int WINDOW_WIDTH = 1200;
-const int WINDOW_HEIGHT = 800;
+const int WINDOW_WIDTH = 1250;
+const int WINDOW_HEIGHT = 650;
 
 
 int main(int argc, char* argv[]) {

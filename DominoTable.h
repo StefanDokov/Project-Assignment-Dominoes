@@ -16,11 +16,15 @@ public:
 	int sideBx;
 	int sideAy;
 	int sideBy;
+	int valueToMatch;
 	void addPiece(DominoBrick);
 	void createFirstBrick();
 	DominoPlayer* currentPlayer;
 	DominoPlayer* oppositePlayer;
 	vector<DominoBrick> tablePieces;
+	vector<string> pathfinder;
+	DominoPlayer* tempP = nullptr;
+	void switchPlayers();
 private:
 	
 	

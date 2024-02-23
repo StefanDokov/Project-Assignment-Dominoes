@@ -13,6 +13,7 @@ DominoBrick::DominoBrick() {
     brickY = 0;
     hidden = false;
     direction = "down";
+    arrowes = "down";
     lastX = 0;
     lastY = 0;
 }

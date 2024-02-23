@@ -34,7 +34,7 @@ private:
 	SDL_Renderer* renderer = NULL;
 	bool running;
 	int mouseDownX, mouseDownY;
-	
+	int difficulty;
 	SDL_Texture* menuFont,
 		* difficultyFont,
 		* normalDifFont,
@@ -66,8 +66,11 @@ private:
 	bool isDiffShown;
 	bool isThemeShown;
 	bool selected;
+	bool menuBool;
+	bool startGame;
 	int selectedItem;
-	DominoPlayer* dominoPlayer = nullptr;
+	DominoPlayer* dominoPlayer1 = nullptr;
+	DominoPlayer* dominoPlayer2 = nullptr;
 	DominoTable* dominoTable = nullptr;
 	DominoBrick* d1 = nullptr;
 	DominoBrick* d2 = nullptr;
