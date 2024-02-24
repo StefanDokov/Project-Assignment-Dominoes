@@ -15,8 +15,10 @@ Game::Game()
     menuBool = true;
     startGame = false;
     difficulty = 0;
-
-    
+    gameOver = false;
+    p1Winner = false;
+    p2Winner = false;
+    isDraw = false;
 }
 
 Game::~Game()
@@ -144,6 +146,23 @@ void Game::render()
         renderPlayer(dominoTable->currentPlayer);
 
         renderTable(dominoTable);
+
+        if (gameOver) {
+            if (isDraw) {
+                SDL_RenderCopy(renderer, drawFont, NULL, &drawdRect);
+
+              }
+            if (p1Winner) {
+                SDL_RenderCopy(renderer, p1winnerFont, NULL, &p1winnerdRect);
+
+            }
+            if (p2Winner) {
+                SDL_RenderCopy(renderer, p2winnerFont, NULL, &p2winnerdRect);
+
+            }
+        }
+
+        
     }
 
     SDL_RenderPresent(renderer);
@@ -169,7 +188,9 @@ void Game::update()
             theme = themeArr[randomNumber];
         }
         dominoPlayer1 = new DominoPlayer();
+        dominoPlayer1->name = "Player1";
         dominoPlayer2 = new DominoPlayer();
+        dominoPlayer2->name = "Player2";
         dominoTable = new DominoTable();
 
         for (int i = 0; i < difficulty;i++) {
@@ -188,9 +209,27 @@ void Game::update()
 
         startGame = false;
     }
+    if (!menuBool) {
 
+        if (hasNoMoves(dominoPlayer1) && hasNoMoves(dominoPlayer2) && dominoPlayer1->realSize() == dominoPlayer2->realSize()) {
+            isDraw = true;
+            gameOver = true;
+        }
+        if (hasNoMoves(dominoPlayer1) && !hasNoMoves(dominoPlayer2) && dominoPlayer1->realSize() >= dominoPlayer2->realSize()) {
 
+            p2Winner = true;
 
+            gameOver = true;
+
+        }
+
+        if (hasNoMoves(dominoPlayer2) && !hasNoMoves(dominoPlayer1) && dominoPlayer2->realSize() >= dominoPlayer1->realSize()) {
+            p1Winner = true;
+            gameOver = true;
+        }
+
+        
+    }
 }
 
 void Game::handleEvents()
@@ -211,7 +250,7 @@ void Game::handleEvents()
                 if (!menuBool) {
                     if (msy < wh && msy >= (wh - 90) && msx >= 20) {
                         for (int i = 0; i < dominoTable->currentPlayer->myPieces.size();i++) {
-                            if (dominoTable->currentPlayer->myPieces[i].brickX < msx && msx <= dominoTable->currentPlayer->myPieces[i].lastX && dominoTable->currentPlayer->myPieces[i].brickY < msy && dominoTable->currentPlayer->myPieces[i].lastY >= msy) {
+                            if (dominoTable->currentPlayer->myPieces[i].brickX <= msx && msx <= dominoTable->currentPlayer->myPieces[i].lastX && dominoTable->currentPlayer->myPieces[i].brickY <= msy && dominoTable->currentPlayer->myPieces[i].lastY >= msy) {
                                 if (dominoTable->currentPlayer->myPieces[i].hidden) {
                                     return;
                                 }
@@ -221,39 +260,187 @@ void Game::handleEvents()
                             }
                         }
                     }
+                    if (dominoTable->tablePieces.back().arrowes == "down" || dominoTable->tablePieces.back().arrowes == "right") {
+                        if ((msx >= dominoTable->sideBx - 25 && msx <= dominoTable->sideBx) && (msy <= dominoTable->sideBy && msy >= dominoTable->sideBy - 25)) {
 
-                    if ((msx >= dominoTable->sideBx - 25 && msx <= dominoTable->sideBx) && (msy <= dominoTable->sideBy && msy >= dominoTable->sideBy - 25)) {
+                            if (selected) {
+                                if (selectedItem < 0) {
+                                    return;
+                                }
+                                DominoBrick dd = dominoTable->currentPlayer->myPieces[selectedItem];
+                                int nextPath = dominoTable->tablePieces.size();
 
+                                cout << dominoTable->pathfinder[nextPath] << endl;
+                                if (dominoTable->pathfinder[nextPath] == "down" && (dd.pValue1 == dominoTable->valueToMatch || dd.pValue2 == dominoTable->valueToMatch) && dominoTable->tablePieces.back().arrowes == "down") {
+                                    if (dd.pValue2 == dominoTable->valueToMatch && dd.pValue1 != dominoTable->valueToMatch) {
+                                        dd.direction = "up";
+                                        dominoTable->valueToMatch = dd.pValue1;
+                                    }
+                                    else {
+                                        dominoTable->valueToMatch = dd.pValue2;
+
+                                    }
+                                    //
+                                    dd.brickX = dominoTable->sideBx - 25;
+                                    dd.brickY = dominoTable->sideBy;
+                                    //
+                                    dd.arrowes = dominoTable->pathfinder[nextPath];
+
+                                    //
+                                    dominoTable->addPiece(dd);
+                                    dominoTable->currentPlayer->myPieces[selectedItem].hidden = true;
+                                    selected = false;
+                                    selectedItem = -1;
+                                    dominoTable->switchPlayers();
+                                    return;
+                                }
+                                if (dominoTable->pathfinder[nextPath] == "right" && (dd.pValue1 == dominoTable->valueToMatch || dd.pValue2 == dominoTable->valueToMatch)) {
+                                    if (dd.pValue2 == dominoTable->valueToMatch && dd.pValue1 != dominoTable->valueToMatch) {
+                                        dd.direction = "left";
+                                        dominoTable->valueToMatch = dd.pValue1;
+                                    }
+                                    else if (dd.pValue2 != dominoTable->valueToMatch && dd.pValue1 == dominoTable->valueToMatch) {
+                                        dd.direction = "right";
+                                        dominoTable->valueToMatch = dd.pValue2;
+                                    }
+                                    else if (dd.pValue2 == dd.pValue1) {
+                                        dd.direction = "right";
+                                        dominoTable->valueToMatch = dd.pValue2;
+                                    }
+                                    dd.arrowes = dominoTable->pathfinder[nextPath];
+                                    dd.brickX = dominoTable->sideBx;
+                                    dd.brickY = dominoTable->sideBy - 25;
+
+                                    //
+                                    dominoTable->addPiece(dd);
+                                    dominoTable->currentPlayer->myPieces[selectedItem].hidden = true;
+                                    selected = false;
+                                    selectedItem = -1;
+                                    dominoTable->switchPlayers();
+                                    return;
+                                }
+                                if (dominoTable->pathfinder[nextPath] == "up" && (dd.pValue1 == dominoTable->valueToMatch || dd.pValue2 == dominoTable->valueToMatch)) {
+                                    cout << "up" << endl;
+                                    if (dd.pValue2 == dominoTable->valueToMatch && dd.pValue1 != dominoTable->valueToMatch) {
+
+                                        dominoTable->valueToMatch = dd.pValue1;
+                                    }
+                                    else {
+                                        dd.direction = "up";
+                                        dominoTable->valueToMatch = dd.pValue2;
+                                    }
+                                    //
+                                    dd.brickX = dominoTable->sideBx - 25;
+                                    dd.brickY = dominoTable->sideBy - 75;
+                                    //
+                                    dd.arrowes = dominoTable->pathfinder[nextPath];
+
+                                    //
+                                    dominoTable->addPiece(dd);
+                                    dominoTable->currentPlayer->myPieces[selectedItem].hidden = true;
+                                    selected = false;
+                                    selectedItem = -1;
+                                    dominoTable->switchPlayers();
+                                    return;
+                                }
+                                if (dominoTable->pathfinder[nextPath] == "down" && (dd.pValue1 == dominoTable->valueToMatch || dd.pValue2 == dominoTable->valueToMatch) && dominoTable->tablePieces.back().arrowes == "right") {
+                                    cout << "up" << endl;
+                                    if (dd.pValue2 == dominoTable->valueToMatch && dd.pValue1 != dominoTable->valueToMatch) {
+                                        dd.direction = "up";
+                                        dominoTable->valueToMatch = dd.pValue1;
+                                    }
+                                    else {
+                                        
+                                        dominoTable->valueToMatch = dd.pValue2;
+                                    }
+                                    //
+                                    dd.brickX = dominoTable->sideBx;
+                                    dd.brickY = dominoTable->sideBy - 25;
+                                    //
+                                    dd.arrowes = dominoTable->pathfinder[nextPath];
+
+                                    //
+                                    dominoTable->addPiece(dd);
+                                    dominoTable->currentPlayer->myPieces[selectedItem].hidden = true;
+                                    selected = false;
+                                    selectedItem = -1;
+                                    dominoTable->switchPlayers();
+                                    return;
+                                }
+                            }
+                        }
+
+                    }
+                
+                //xx
+                if (dominoTable->tablePieces.back().arrowes == "up") {
+                        
+                    if ((msx >= dominoTable->sideBx - 25 && msx <= dominoTable->sideBx) && (msy >= dominoTable->sideBy && msy <= dominoTable->sideBy + 25)) {
+                        cout << "up2" << endl;
                         if (selected) {
                             if (selectedItem < 0) {
                                 return;
                             }
                             DominoBrick dd = dominoTable->currentPlayer->myPieces[selectedItem];
                             int nextPath = dominoTable->tablePieces.size();
-                            cout << nextPath << endl;
-                            cout << dominoTable->pathfinder[nextPath] << endl;
-                            if (dominoTable->pathfinder[nextPath] == "down") {
+
+                            
+                            if (dominoTable->pathfinder[nextPath] == "up" && (dd.pValue1 == dominoTable->valueToMatch || dd.pValue2 == dominoTable->valueToMatch)) {
+                                if (dd.pValue2 == dominoTable->valueToMatch && dd.pValue1 != dominoTable->valueToMatch) {
+                                    
+                                    dominoTable->valueToMatch = dd.pValue1;
+                                }
+                                else {
+                                    dd.direction = "up";
+                                    dominoTable->valueToMatch = dd.pValue2;
+
+                                }
+                                //
                                 dd.brickX = dominoTable->sideBx - 25;
-                                dd.brickY = dominoTable->sideBy;
+                                dd.brickY = dominoTable->sideBy - 50;
+                                //
+                                dd.arrowes = dominoTable->pathfinder[nextPath];
+
+                                //
+                                dominoTable->addPiece(dd);
+                                dominoTable->currentPlayer->myPieces[selectedItem].hidden = true;
+                                selected = false;
+                                selectedItem = -1;
+                                dominoTable->switchPlayers();
+                                return;
                             }
-                            else if (dominoTable->pathfinder[nextPath] == "right") {
-                                dd.direction = "right";
-                                dd.brickX = dominoTable->sideBx;
+                            if (dominoTable->pathfinder[nextPath] == "right" && (dd.pValue1 == dominoTable->valueToMatch || dd.pValue2 == dominoTable->valueToMatch)) {
+                                if (dd.pValue2 == dominoTable->valueToMatch && dd.pValue1 != dominoTable->valueToMatch) {
+                                    dd.direction = "left";
+                                    dominoTable->valueToMatch = dd.pValue1;
+                                }
+                                else {
+                                    dd.direction = "right";
+                                    dominoTable->valueToMatch = dd.pValue2;
+
+                                }
+                                //
+                                dd.brickX = dominoTable->sideBx - 25;
                                 dd.brickY = dominoTable->sideBy - 25;
+                                //
+                                dd.arrowes = dominoTable->pathfinder[nextPath];
+
+                                //
+                                dominoTable->addPiece(dd);
+                                dominoTable->currentPlayer->myPieces[selectedItem].hidden = true;
+                                selected = false;
+                                selectedItem = -1;
+                                dominoTable->switchPlayers();
+                                return;
                             }
-                            /*dd.brickX = dominoTable->sideBx - 25;
-                            dd.brickY = dominoTable->sideBy;*/
-                            dominoTable->addPiece(dd);
-                            dominoTable->currentPlayer->myPieces[selectedItem].hidden = true;
-                            selected = false;
-                            selectedItem = -1;
-                            dominoTable->switchPlayers();
-                            return;
+
                         }
-
-
                     }
+                    return;
                 }
+                
+            } //xx
+        
                 if (menuBool) {
                     if (msy >= normaldRect.y && msy < mediumdRect.y) {
                         fpointerdRect.x = normaldRect.x - 30;
@@ -364,14 +551,28 @@ bool Game::isRunning()
 void Game::renderBrick(DominoBrick* b)
 {
     if (b->direction == "down") {
+
         string currTheme = theme + "_" + to_string(b->pValue1);
         TextureManager::Instance()->drawTexture(currTheme, b->brickX, b->brickY, 25, 25, 0, renderer, SDL_FLIP_VERTICAL);
         currTheme = theme + "_" + to_string(b->pValue2);
         TextureManager::Instance()->drawTexture(currTheme, b->brickX, b->brickY + 25, 25, 25, 0, renderer);
+
+
+        if (b->arrowes == "down") {
+
         b->lastX = b->brickX + 25;
         b->lastY = b->brickY + 50;
+        }
+        if (b->arrowes == "up") {
+            b->lastX = b->brickX + 25;
+            b->lastY = b->brickY;
+        }
+        
+       
+
     }
     if (b->direction == "left") {
+        
         string currTheme = theme + "_" + to_string(b->pValue1);
         TextureManager::Instance()->drawTexture(currTheme, b->brickX + 25, b->brickY, 25, 25, -90, renderer);
         currTheme = theme + "_" + to_string(b->pValue2);
@@ -385,16 +586,30 @@ void Game::renderBrick(DominoBrick* b)
         TextureManager::Instance()->drawTexture(currTheme, b->brickX, b->brickY, 25, 25, 90, renderer);
         currTheme = theme + "_" + to_string(b->pValue2);
         TextureManager::Instance()->drawTexture(currTheme, b->brickX + 25, b->brickY, 25, 25, -90, renderer);
+        
         b->lastX = b->brickX + 50;
         b->lastY = b->brickY + 25;
+        
+        
     }
     if (b->direction == "up") {
+        
         string currTheme = theme + "_" + to_string(b->pValue1);
         TextureManager::Instance()->drawTexture(currTheme, b->brickX, b->brickY + 25, 25, 25, 0, renderer);
         currTheme = theme + "_" + to_string(b->pValue2);
         TextureManager::Instance()->drawTexture(currTheme, b->brickX, b->brickY, 25, 25, 0, renderer, SDL_FLIP_VERTICAL);
-        b->lastX = b->brickX + 25;
-        b->lastY = b->brickY + 50;
+        
+        if (b->arrowes == "down") {
+
+            b->lastX = b->brickX + 25;
+            b->lastY = b->brickY + 50;
+        }
+        if (b->arrowes == "up") {
+            b->lastX = b->brickX + 25;
+            b->lastY = b->brickY;
+        }
+        
+        
     }
 }
 
@@ -412,6 +627,17 @@ void Game::renderTable(DominoTable* s)
     DominoBrick last = s->tablePieces.back();
     dominoTable->sideBx = last.lastX;
     dominoTable->sideBy = last.lastY;
+}
+
+bool Game::hasNoMoves(DominoPlayer* b)
+{
+    for (auto& brick: b->myPieces) {
+        if ((brick.pValue1 == dominoTable->valueToMatch || brick.pValue2 == dominoTable->valueToMatch) && !brick.hidden) {
+            
+            return false;
+        }
+    }
+    return true;
 }
 
 void Game::renderOponent(DominoPlayer* b)
@@ -482,7 +708,11 @@ bool Game::ttf_init() {
     createTextureFromText(">", font3, fpointerFont);
     createTextureFromText(">", font3, spointerFont);
     createTextureFromText("OK", font3, okFont);
-
+    createTextureFromText("Player 1 is Winner", font2, p1winnerFont);
+    createTextureFromText("Player 2 is Winner", font2, p2winnerFont);
+    createTextureFromText("Draw", font2, drawFont);
+   
+    
 
     SDL_Surface* tempSurfaceText = NULL;
     int ww, wh;
@@ -523,6 +753,15 @@ bool Game::ttf_init() {
     
     SDL_QueryTexture(spointerFont, 0, 0, &tw, &th);
     spointerdRect = { 0, 0, tw,th };
+
+    SDL_QueryTexture(p1winnerFont, 0, 0, &tw, &th);
+    p1winnerdRect = { ww / 2 - tw / 2, wh / 2 - th / 2, tw,th };
+
+    SDL_QueryTexture(p2winnerFont, 0, 0, &tw, &th);
+    p2winnerdRect = { ww / 2 - tw / 2, wh / 2 - th / 2, tw,th };
+
+    SDL_QueryTexture(drawFont, 0, 0, &tw, &th);
+    drawdRect = { ww / 2 - tw / 2, wh / 2 - th / 2, tw,th };
 
     SDL_FreeSurface(tempSurfaceText);
     TTF_CloseFont(font1);

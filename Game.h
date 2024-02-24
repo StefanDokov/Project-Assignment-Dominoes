@@ -27,6 +27,7 @@ public:
 	void renderBrick(DominoBrick* b);
 	void renderTable(DominoTable*);
 	string theme;
+	bool hasNoMoves(DominoPlayer*);
 	void renderOponent(DominoPlayer*);
 	bool createTextureFromText(const char* text, TTF_Font* font, SDL_Texture*& texture);
 private:
@@ -47,8 +48,9 @@ private:
 		* fpointerFont,
 		* spointerFont,
 		* okFont,
-		* loseFont,
-		* betFont;
+		* p1winnerFont,
+		* p2winnerFont,
+		* drawFont;
 	SDL_Rect menudRect,
 		difficultydRect,
 		normaldRect,
@@ -61,13 +63,18 @@ private:
 		fpointerdRect,
 		spointerdRect,
 		okdRect,
-		losedRect,
-		betdRect;
+		p1winnerdRect,
+		p2winnerdRect,
+		drawdRect;
 	bool isDiffShown;
 	bool isThemeShown;
 	bool selected;
 	bool menuBool;
 	bool startGame;
+	bool gameOver;
+	bool p1Winner;
+	bool p2Winner;
+	bool isDraw;
 	int selectedItem;
 	DominoPlayer* dominoPlayer1 = nullptr;
 	DominoPlayer* dominoPlayer2 = nullptr;

@@ -3,8 +3,8 @@
 DominoTable::DominoTable(): currentPlayer(nullptr), oppositePlayer(nullptr)
 {
 	valueToMatch = 0;
-	pathfinder = { "down", "down", "down", "down", "down", "down", "down", "down", "down", "right", "up", "up", "up", "up", "up", "up", "up", "up", "up", "right", "down","down","down",
-	"down", "down" ,"down","down" ,"down" ,"down" ,"right", "up", "up", "up", "up", "up", "up", "up", "up", "up", "right", "down", "down", "down", "down", "down", "down", "down", "down", "down", "right", "up", "up", "up", "up", "up", "up", "up", "up", "up", };
+	pathfinder = { "down", "down", "down", "down", "down", "down", "down", "down", "down", "right", "up", "up", "up", "up", "up", "up", "up", "up", "right", "down","down","down",
+	"down", "down" ,"down","down" ,"down" ,"down" ,"right", "up", "up", "up", "up", "up", "up", "up", "up", "right", "down", "down", "down", "down", "down", "down", "down", "down", "down", "right", "up", "up", "up", "up", "up", "up", "up", "up", "right","down", "down", "down"};
 
 }
 
@@ -21,7 +21,7 @@ void DominoTable::createFirstBrick()
 	db.brickY = 65;
 	valueToMatch = db.pValue2;
 	tablePieces.push_back(db);
-	
+	valueToMatch = db.pValue2;
 }
 
 void DominoTable::switchPlayers()

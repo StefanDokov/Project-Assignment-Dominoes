@@ -12,7 +12,8 @@ public:
 	int getSize();
 	void addPiece(DominoBrick);
 	vector<DominoBrick> myPieces;
-
+	string name;
+	int realSize();
 private:
 
 	

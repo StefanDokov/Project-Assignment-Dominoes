@@ -2,7 +2,7 @@
 
 
 DominoPlayer::DominoPlayer() {
-
+	name = "";
 }
 
 int DominoPlayer::getSize() {
@@ -11,4 +11,16 @@ int DominoPlayer::getSize() {
 
 void DominoPlayer::addPiece(DominoBrick a) {
 	myPieces.push_back(a);
+}
+
+int DominoPlayer::realSize()
+{
+	int result = 0;
+
+	for (auto& bricker : myPieces) {
+		if (!bricker.hidden) {
+			result++;
+		}
+	}
+	return result;
 }
