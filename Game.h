@@ -50,7 +50,10 @@ private:
 		* okFont,
 		* p1winnerFont,
 		* p2winnerFont,
-		* drawFont;
+		* drawFont,
+		* menuBtnFont,
+		* passBtnFont,
+		* newBtnFont;
 	SDL_Rect menudRect,
 		difficultydRect,
 		normaldRect,
@@ -65,7 +68,10 @@ private:
 		okdRect,
 		p1winnerdRect,
 		p2winnerdRect,
-		drawdRect;
+		drawdRect,
+		menuBtndRect,
+		passBtndRect,
+		newBtndRect;
 	bool isDiffShown;
 	bool isThemeShown;
 	bool selected;
@@ -83,5 +89,6 @@ private:
 	DominoBrick* d2 = nullptr;
 	TTF_Font* font1,
 		* font2,
-		* font3;
+		* font3,
+		* font4;
 };
