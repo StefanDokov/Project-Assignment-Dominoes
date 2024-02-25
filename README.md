@@ -1,7 +1,7 @@
 # Project-Assignment-Dominoes
 Project-Assignment-Dominoes
 
-Моля добави/покани https://github.com/MilkoBalev като collaborator (repo -> Settings -> Collaborators -> Add people -> MilkoBalev)
+
 Поздрави,
 Началното меню работи, като играта започва. Върви на змия като започва от горен ляв ъгъл и върви надолу, после на дясно и нагоре. Показва дали Player 1 е победител или Player 2, а също така може и да е равен.
 
