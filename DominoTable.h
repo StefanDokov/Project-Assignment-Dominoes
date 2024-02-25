@@ -23,6 +23,9 @@ public:
 	DominoPlayer* oppositePlayer;
 	vector<DominoBrick> tablePieces;
 	vector<string> pathfinder;
+	vector<DominoBrick> allBricks;
+	void createBricks();
+	void shuffleBricks();
 	DominoPlayer* tempP = nullptr;
 	void switchPlayers();
 private:

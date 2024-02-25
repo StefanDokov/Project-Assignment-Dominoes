@@ -9,6 +9,7 @@ using namespace std;
 class DominoBrick {
 public:
 	DominoBrick();
+	DominoBrick(int, int);
 	~DominoBrick() {};
 
 	int pValue1;

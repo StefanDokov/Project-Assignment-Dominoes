@@ -1,7 +1,6 @@
 #pragma once
 #include <SDL.h>
 #include <SDL_image.h>
-#include <SDL_mixer.h>
 #include <SDL_ttf.h>
 #include <string>
 #include <vector>
@@ -10,6 +9,7 @@
 #include "DominoPlayer.h"
 #include "DominoTable.h"
 #include <iostream>
+#include <chrono>
 using namespace std;
 
 class Game {
@@ -27,6 +27,7 @@ public:
 	void renderBrick(DominoBrick* b);
 	void renderTable(DominoTable*);
 	string theme;
+	
 	bool hasNoMoves(DominoPlayer*);
 	void renderOponent(DominoPlayer*);
 	bool createTextureFromText(const char* text, TTF_Font* font, SDL_Texture*& texture);
@@ -53,7 +54,8 @@ private:
 		* drawFont,
 		* menuBtnFont,
 		* passBtnFont,
-		* newBtnFont;
+		* newBtnFont,
+	    * timerFont;
 	SDL_Rect menudRect,
 		difficultydRect,
 		normaldRect,
@@ -61,7 +63,7 @@ private:
 		harddRect,
 		themedRect,
 		seadRect,
-	    cardRect,
+		cardRect,
 		flowerdRect,
 		fpointerdRect,
 		spointerdRect,
@@ -71,7 +73,9 @@ private:
 		drawdRect,
 		menuBtndRect,
 		passBtndRect,
-		newBtndRect;
+		newBtndRect,
+		timerdRect;
+	    
 	bool isDiffShown;
 	bool isThemeShown;
 	bool selected;
@@ -81,6 +85,7 @@ private:
 	bool p1Winner;
 	bool p2Winner;
 	bool isDraw;
+	bool okClicked;
 	int selectedItem;
 	DominoPlayer* dominoPlayer1 = nullptr;
 	DominoPlayer* dominoPlayer2 = nullptr;
@@ -91,4 +96,6 @@ private:
 		* font2,
 		* font3,
 		* font4;
+	std::chrono::steady_clock::time_point menuStartTime;
+	int timeCount;
 };

@@ -13,12 +13,14 @@ Game::Game()
     selectedItem = -1;
     theme = "";
     menuBool = true;
+    okClicked = false;
     startGame = false;
     difficulty = 0;
     gameOver = false;
     p1Winner = false;
     p2Winner = false;
     isDraw = false;
+    timeCount = 10;
 }
 
 Game::~Game()
@@ -88,7 +90,7 @@ bool Game::init(const char* title, int xpos, int ypos, int width, int height, in
                 TextureManager::Instance()->loadTexture("assets/flowers/6.jpg", "flowers_6", renderer);
                 
 
-
+                
 
             }
             else {
@@ -107,6 +109,7 @@ bool Game::init(const char* title, int xpos, int ypos, int width, int height, in
     }
     cout << "init success\n";
     running = true;
+    menuStartTime = std::chrono::steady_clock::now();
     return true;
 
 }
@@ -132,6 +135,7 @@ void Game::render()
         SDL_RenderCopy(renderer, carFont, NULL, &cardRect);
         SDL_RenderCopy(renderer, flowerFont, NULL, &flowerdRect);
         SDL_RenderCopy(renderer, okFont, NULL, &okdRect);
+        SDL_RenderCopy(renderer, timerFont, NULL, &timerdRect);
 
         if (isDiffShown) {
             SDL_RenderCopy(renderer, fpointerFont, NULL, &fpointerdRect);
@@ -183,6 +187,29 @@ void Game::render()
 
 void Game::update()
 {
+
+    if (menuBool && !okClicked) {
+        auto currentTime = std::chrono::steady_clock::now();
+        auto elapsedSeconds = std::chrono::duration_cast<std::chrono::seconds>(currentTime - menuStartTime).count();
+        int currTimer = 10 - elapsedSeconds;
+        if (currTimer <= timeCount) {
+            int ww, wh;
+            SDL_GetWindowSize(window, &ww, &wh);
+            int tw, th;
+            timeCount = currTimer;
+            std::string str = std::to_string(timeCount);
+            createTextureFromText(str.c_str(), font4, timerFont);
+            SDL_QueryTexture(timerFont, 0, 0, &tw, &th);
+            timerdRect = { ww / 2 + 30, (int)(0 + wh * 0.15 - th / 2) + 500, tw,th };
+        }
+        if (elapsedSeconds >= 10) {
+            startGame = true;
+            menuBool = false; // Reset menuBool after 10 seconds
+            okClicked = true;
+        }
+    }
+
+
     if (startGame) {
         if (difficulty == 0) {
             difficulty = 10;
@@ -201,15 +228,16 @@ void Game::update()
         dominoPlayer2 = new DominoPlayer();
         dominoPlayer2->name = "Player2";
         dominoTable = new DominoTable();
+        dominoTable->createBricks();
+        dominoTable->shuffleBricks();
 
         for (int i = 0; i < difficulty;i++) {
-            DominoBrick d;
-            dominoPlayer1->addPiece(d);
+            
+            dominoPlayer1->addPiece(dominoTable->allBricks[i]);
         }
-
+        dominoTable->shuffleBricks();
         for (int i = 0; i < difficulty;i++) {
-            DominoBrick d;
-            dominoPlayer2->addPiece(d);
+            dominoPlayer2->addPiece(dominoTable->allBricks[i]);
         }
 
         dominoTable->createFirstBrick();
@@ -218,7 +246,14 @@ void Game::update()
 
         startGame = false;
     }
+
+    
+
+
     if (!menuBool) {
+        if (okClicked) {
+            okClicked = false;
+        }
         if (dominoPlayer2->realSize() == 0) {
             p2Winner = true;
             gameOver = true;
@@ -246,6 +281,9 @@ void Game::update()
         }
         
     }
+   
+    
+    
 }
 
 void Game::handleEvents()
@@ -517,6 +555,8 @@ void Game::handleEvents()
                             isDiffShown = false;
                             isThemeShown = false;
                             menuBool = true;
+                            menuStartTime = std::chrono::steady_clock::now();
+                            timeCount = 10;
                             return;
                         }
 
@@ -582,9 +622,10 @@ void Game::handleEvents()
 
                         }
                         if (msy >= okdRect.y && msy < okdRect.y + okdRect.h) {
-
+                            okClicked = true;
                             startGame = true;
                             menuBool = false;
+                            
                         }
                     }
                 }
@@ -833,6 +874,8 @@ bool Game::ttf_init() {
 
     SDL_QueryTexture(okFont, 0, 0, &tw, &th);
     okdRect = { ww / 2 - tw / 2, (int)(0 + wh * 0.15 - th / 2) + 500, tw,th };
+
+    
 
     SDL_QueryTexture(fpointerFont, 0, 0, &tw, &th);
     fpointerdRect = { 0, 0, tw,th };
